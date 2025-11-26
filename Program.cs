@@ -1,43 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GeometryApp
 {
-    #region Constants and Resources
-    /// <summary>
-    /// Константи для UI
-    /// </summary>
-    public static class UIConstants
-    {
-        public const int LineWidth = 60;
-        public const string HeaderLine = "╔═══════════════════════════════════════════════════════════╗";
-        public const string FooterLine = "╚═══════════════════════════════════════════════════════════╝";
-        public const string Separator = "─";
-
-        public static class Messages
-        {
-            public const string ProgramTitle = "║  Лабораторна робота: Віртуальні методи та поліморфізм    ║";
-            public const string Author = "║  Виконав: noic9                                           ║";
-            public const string ProgramComplete = "║  Програма завершена. Натисніть будь-яку клавішу...       ║";
-            public const string ObjectAdded = "✓ Додано об'єкт: ";
-            public const string InvalidInput = "❌ Помилка! Введіть коректне число.";
-            public const string CriticalError = "❌ Критична помилка: ";
-        }
-
-        public static class Symbols
-        {
-            public const string Check = "✓";
-            public const string Cross = "✗";
-            public const string Point = "📍";
-            public const string Pencil = "📝";
-            public const string Chart = "📊";
-            public const string Pin = "📌";
-        }
-    }
-    #endregion
-
-    #region Base Classes
     /// <summary>
     /// Базовий абстрактний клас для геометричних об'єктів
     /// </summary>
@@ -46,41 +11,32 @@ namespace GeometryApp
         protected const double Epsilon = 1e-10;
 
         /// <summary>
-        /// Абстрактний метод для виведення інформації про об'єкт
+        /// Віртуальний метод для виведення інформації про об'єкт
         /// </summary>
         public abstract void PrintInfo();
 
         /// <summary>
         /// Абстрактний метод для перевірки валідності об'єкта
-        /// Всі нащадки повинні явно визначити власну логіку валідації
         /// </summary>
         public abstract bool IsValid();
 
         /// <summary>
-        /// Абстрактний метод для обчислення розмірності об'єкта
+        /// Віртуальний метод для обчислення "розмірності" об'єкта
         /// </summary>
         public abstract int GetDimension();
-
-        /// <summary>
-        /// Віртуальний метод для отримання типу об'єкта
-        /// </summary>
-        public abstract string GetObjectType();
     }
-    #endregion
 
-    #region Pryama Class
     /// <summary>
     /// Базовий клас для представлення прямої на площині
     /// Рівняння: a1*x + a2*y + a0 = 0
     /// </summary>
     public class Pryama : GeometricObject
     {
-        // Приватні поля
+        // Приватні поля з префіксом _
         private double _a0;
         private double _a1;
         private double _a2;
 
-        #region Properties
         /// <summary>
         /// Властивість для доступу до коефіцієнта a0 (вільний член)
         /// </summary>
@@ -107,17 +63,15 @@ namespace GeometryApp
             get => _a2;
             protected set => _a2 = value;
         }
-        #endregion
 
-        #region Constructors
         /// <summary>
         /// Конструктор за замовчуванням
         /// </summary>
         public Pryama()
         {
-            A0 = 0;
-            A1 = 0;
-            A2 = 0;
+            _a0 = 0;
+            _a1 = 0;
+            _a2 = 0;
         }
 
         /// <summary>
@@ -125,13 +79,11 @@ namespace GeometryApp
         /// </summary>
         public Pryama(double a0, double a1, double a2)
         {
-            A0 = a0;
-            A1 = a1;
-            A2 = a2;
+            _a0 = a0;
+            _a1 = a1;
+            _a2 = a2;
         }
-        #endregion
 
-        #region Virtual Methods
         /// <summary>
         /// Віртуальний метод завдання коефіцієнтів
         /// </summary>
@@ -157,9 +109,9 @@ namespace GeometryApp
         /// </summary>
         public virtual void PrintCoefficients()
         {
-            Console.WriteLine(UIConstants.HeaderLine);
-            Console.WriteLine("║                         ПРЯМА                             ║");
-            Console.WriteLine(UIConstants.FooterLine);
+            Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
+            Console. WriteLine("║                         ПРЯМА                             ║");
+            Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
             Console.WriteLine($"Рівняння: ({A1})*x + ({A2})*y + ({A0}) = 0");
             Console.WriteLine($"Коефіцієнти: a0={A0}, a1={A1}, a2={A2}");
         }
@@ -174,9 +126,9 @@ namespace GeometryApp
                 throw new ArgumentNullException(nameof(point));
             }
 
-            if (point.Length != GetDimension())
+            if (point.Length != 2)
             {
-                throw new ArgumentException($"Для {GetObjectType()} потрібно {GetDimension()} координат");
+                throw new ArgumentException("Для прямої потрібно 2 координати (x, y)");
             }
 
             double x = point[0];
@@ -187,19 +139,19 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Віртуальний метод обчислення відстані від точки
+        /// Віртуальний метод обчислення відстані від точки до прямої
         /// </summary>
         public virtual double DistanceToPoint(params double[] point)
         {
-            if (point == null || point.Length != GetDimension())
+            if (point == null || point.Length != 2)
             {
-                throw new ArgumentException($"Потрібно {GetDimension()} координат");
+                throw new ArgumentException("Потрібно 2 координати");
             }
 
             double x = point[0];
             double y = point[1];
 
-            // Формула відстані: |a1*x + a2*y + a0| / sqrt(a1² + a2²)
+            // Формула відстані від точки до прямої: |a1*x + a2*y + a0| / sqrt(a1² + a2²)
             double numerator = Math.Abs(A1 * x + A2 * y + A0);
             double denominator = Math.Sqrt(A1 * A1 + A2 * A2);
 
@@ -210,30 +162,28 @@ namespace GeometryApp
 
             return numerator / denominator;
         }
-        #endregion
 
-        #region Overridden Methods
         /// <summary>
-        /// Перевизначення методу GetObjectType
+        /// Віртуальний метод для отримання типу об'єкта
         /// </summary>
-        public override string GetObjectType()
+        public virtual string GetObjectType()
         {
             return "Пряма";
         }
 
         /// <summary>
-        /// Перевизначення методу PrintInfo
+        /// Перевизначення абстрактного методу PrintInfo
         /// </summary>
         public override void PrintInfo()
         {
             Console.WriteLine($"┌─ Тип: {GetObjectType()}");
             Console.WriteLine($"│  Рівняння: ({A1})*x + ({A2})*y + ({A0}) = 0");
-            Console.WriteLine($"│  Розмірність простору: {GetDimension()}D");
-            Console.WriteLine($"└─ Статус: {(IsValid() ? UIConstants.Symbols.Check + " Валідний" : UIConstants.Symbols.Cross + " Невалідний")}");
+            Console.WriteLine($"│  Розмірність простору: {GetDimension()}");
+            Console.WriteLine($"└─ Статус: {(IsValid() ? "✓ Валідний" : "✗ Невалідний")}");
         }
 
         /// <summary>
-        /// Абстрактний метод валідності (явна реалізація)
+        /// Перевизначення методу валідності
         /// </summary>
         public override bool IsValid()
         {
@@ -253,11 +203,8 @@ namespace GeometryApp
         {
             return $"Пряма: ({A1})*x + ({A2})*y + ({A0}) = 0";
         }
-        #endregion
     }
-    #endregion
 
-    #region Giperploschyna Class
     /// <summary>
     /// Похідний клас для гіперплощини у 4-вимірному просторі
     /// Рівняння: a4*x4 + a3*x3 + a2*x2 + a1*x1 + a0 = 0
@@ -267,7 +214,6 @@ namespace GeometryApp
         private double _a3;
         private double _a4;
 
-        #region Properties
         public double A3
         {
             get => _a3;
@@ -279,24 +225,23 @@ namespace GeometryApp
             get => _a4;
             private set => _a4 = value;
         }
-        #endregion
 
-        #region Constructors
         public Giperploschyna() : base()
         {
-            A3 = 0;
-            A4 = 0;
+            _a3 = 0;
+            _a4 = 0;
         }
 
         public Giperploschyna(double a0, double a1, double a2, double a3, double a4)
             : base(a0, a1, a2)
         {
-            A3 = a3;
-            A4 = a4;
+            _a3 = a3;
+            _a4 = a4;
         }
-        #endregion
 
-        #region Overridden Virtual Methods
+        /// <summary>
+        /// Перевизначений віртуальний метод SetCoefficients
+        /// </summary>
         public override void SetCoefficients(params double[] coefficients)
         {
             if (coefficients == null)
@@ -316,15 +261,21 @@ namespace GeometryApp
             A4 = coefficients[4];
         }
 
+        /// <summary>
+        /// Перевизначений віртуальний метод PrintCoefficients
+        /// </summary>
         public override void PrintCoefficients()
         {
-            Console.WriteLine(UIConstants.HeaderLine);
+            Console. WriteLine("╔═══════════════════════════════════════════════════════════╗");
             Console.WriteLine("║                     ГІПЕРПЛОЩИНА                          ║");
-            Console.WriteLine(UIConstants.FooterLine);
+            Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
             Console.WriteLine($"Рівняння: ({A4})*x4 + ({A3})*x3 + ({A2})*x2 + ({A1})*x1 + ({A0}) = 0");
             Console.WriteLine($"Коефіцієнти: a0={A0}, a1={A1}, a2={A2}, a3={A3}, a4={A4}");
         }
 
+        /// <summary>
+        /// Перевизначений віртуальний метод ContainsPoint
+        /// </summary>
         public override bool ContainsPoint(params double[] point)
         {
             if (point == null)
@@ -332,24 +283,27 @@ namespace GeometryApp
                 throw new ArgumentNullException(nameof(point));
             }
 
-            if (point.Length != GetDimension())
+            if (point.Length != 4)
             {
-                throw new ArgumentException($"Для {GetObjectType()} потрібно {GetDimension()} координат");
+                throw new ArgumentException("Для гіперплощини потрібно 4 координати (x1, x2, x3, x4)");
             }
 
             double result = A4 * point[3] + A3 * point[2] + A2 * point[1] + A1 * point[0] + A0;
             return Math.Abs(result) < Epsilon;
         }
 
+        /// <summary>
+        /// Перевизначений віртуальний метод DistanceToPoint
+        /// </summary>
         public override double DistanceToPoint(params double[] point)
         {
-            if (point == null || point.Length != GetDimension())
+            if (point == null || point.Length != 4)
             {
-                throw new ArgumentException($"Потрібно {GetDimension()} координат");
+                throw new ArgumentException("Потрібно 4 координати");
             }
 
-            // Формула відстані в 4D
-            double numerator = Math.Abs(A1 * point[0] + A2 * point[1] + A3 * point[2] + A4 * point[3] + A0);
+            // Формула відстані в 4D: |a1*x1 + a2*x2 + a3*x3 + a4*x4 + a0| / sqrt(a1² + a2² + a3² + a4²)
+            double numerator = Math. Abs(A1 * point[0] + A2 * point[1] + A3 * point[2] + A4 * point[3] + A0);
             double denominator = Math.Sqrt(A1 * A1 + A2 * A2 + A3 * A3 + A4 * A4);
 
             if (denominator < Epsilon)
@@ -360,25 +314,37 @@ namespace GeometryApp
             return numerator / denominator;
         }
 
+        /// <summary>
+        /// Перевизначений віртуальний метод GetObjectType
+        /// </summary>
         public override string GetObjectType()
         {
             return "Гіперплощина";
         }
 
+        /// <summary>
+        /// Перевизначення методу PrintInfo
+        /// </summary>
         public override void PrintInfo()
         {
             Console.WriteLine($"┌─ Тип: {GetObjectType()}");
             Console.WriteLine($"│  Рівняння: ({A4})*x4 + ({A3})*x3 + ({A2})*x2 + ({A1})*x1 + ({A0}) = 0");
-            Console.WriteLine($"│  Розмірність простору: {GetDimension()}D");
-            Console.WriteLine($"└─ Статус: {(IsValid() ? UIConstants.Symbols.Check + " Валідний" : UIConstants.Symbols.Cross + " Невалідний")}");
+            Console.WriteLine($"│  Розмірність простору: {GetDimension()}");
+            Console.WriteLine($"└─ Статус: {(IsValid() ? "✓ Валідний" : "✗ Невалідний")}");
         }
 
+        /// <summary>
+        /// Перевизначення методу валідності
+        /// </summary>
         public override bool IsValid()
         {
-            return Math.Abs(A1) > Epsilon || Math.Abs(A2) > Epsilon ||
+            return Math.Abs(A1) > Epsilon || Math. Abs(A2) > Epsilon ||
                    Math.Abs(A3) > Epsilon || Math.Abs(A4) > Epsilon;
         }
 
+        /// <summary>
+        /// Розмірність простору
+        /// </summary>
         public override int GetDimension()
         {
             return 4;
@@ -388,18 +354,14 @@ namespace GeometryApp
         {
             return $"Гіперплощина: ({A4})*x4 + ({A3})*x3 + ({A2})*x2 + ({A1})*x1 + ({A0}) = 0";
         }
-        #endregion
     }
-    #endregion
 
-    #region GeometryManager Class
     /// <summary>
-    /// Клас для управління колекцією геометричних об'єктів
-    /// Використовує List<GeometricObject> для максимальної гнучкості
+    /// Клас для демонстрації поліморфізму та роботи з динамічними об'єктами
     /// </summary>
     public class GeometryManager
     {
-        private readonly List<GeometricObject> _objects;
+        private List<GeometricObject> _objects;
 
         public GeometryManager()
         {
@@ -414,20 +376,20 @@ namespace GeometryApp
             if (obj != null)
             {
                 _objects.Add(obj);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(UIConstants.Messages.ObjectAdded + obj.GetObjectType());
-                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor. Green;
+                Console.WriteLine($"✓ Додано об'єкт: {obj.GetType().Name}");
+                Console. ResetColor();
             }
         }
 
         /// <summary>
-        /// Виведення всіх об'єктів
+        /// Виведення інформації про всі об'єкти (демонстрація поліморфізму)
         /// </summary>
         public void PrintAllObjects()
         {
-            Console.WriteLine($"\n{UIConstants.HeaderLine}");
+            Console.WriteLine($"\n{UIConstants.BoxTop}");
             Console.WriteLine("║          СПИСОК ВСІХ ОБ'ЄКТІВ (Поліморфізм)              ║");
-            Console.WriteLine($"{UIConstants.FooterLine}\n");
+            Console.WriteLine($"{UIConstants.BoxBottom}\n");
 
             if (_objects.Count == 0)
             {
@@ -442,19 +404,20 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Демонстрація віртуальних методів
+        /// Демонстрація виклику віртуальних методів
         /// </summary>
         public void DemonstrateVirtualMethods()
         {
-            Console.WriteLine($"\n{UIConstants.HeaderLine}");
+            Console.WriteLine($"\n{UIConstants.BoxTop}");
             Console.WriteLine("║       ДЕМОНСТРАЦІЯ ВІРТУАЛЬНИХ МЕТОДІВ                    ║");
-            Console.WriteLine($"{UIConstants.FooterLine}\n");
+            Console.WriteLine($"{UIConstants.BoxBottom}\n");
 
             foreach (var obj in _objects)
             {
-                Console.WriteLine("\n" + new string('─', UIConstants.LineWidth));
+                Console.WriteLine($"\n{UIConstants. Separator}");
                 obj.PrintInfo();
-
+                
+                // Перевірка чи об'єкт підтримує PrintCoefficients
                 if (obj is Pryama pryama)
                 {
                     pryama.PrintCoefficients();
@@ -463,51 +426,43 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Перевірка точки для всіх об'єктів з перевіркою розмірності
+        /// Перевірка точки для всіх об'єктів
         /// </summary>
         public void CheckPointForAll(double[] point)
         {
-            if (point == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Точка не може бути null");
-                Console.ResetColor();
-                return;
-            }
-
-            Console.WriteLine($"\n{UIConstants.HeaderLine}");
+            Console.WriteLine($"\n{UIConstants.BoxTop}");
             Console.WriteLine($"║  ПЕРЕВІРКА ТОЧКИ ({string.Join(", ", point)})");
-            Console.WriteLine($"{UIConstants.FooterLine}\n");
+            Console.WriteLine($"{UIConstants.BoxBottom}\n");
 
             foreach (var obj in _objects)
             {
                 // Перевірка розмірності перед викликом методів
-                if (point.Length != obj.GetDimension())
+                int requiredDimension = obj.GetDimension();
+                if (point.Length != requiredDimension)
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine($"{obj.GetObjectType()}: Пропущено (потрібно {obj.GetDimension()}D, надано {point.Length}D)");
-                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor. Red;
+                    Console.WriteLine($"{obj.GetType().Name}: Невідповідна розмірність точки (потрібно {requiredDimension}D)");
+                    Console. ResetColor();
                     continue;
                 }
 
                 try
                 {
-                    // Безпечний виклик методів тільки після перевірки розмірності
                     if (obj is Pryama pryama)
                     {
                         bool belongs = pryama.ContainsPoint(point);
                         double distance = pryama.DistanceToPoint(point);
 
-                        Console.ForegroundColor = belongs ? ConsoleColor.Green : ConsoleColor.Yellow;
-                        Console.WriteLine($"{obj.GetObjectType()}: {(belongs ? UIConstants.Symbols.Check + " НАЛЕЖИТЬ" : UIConstants.Symbols.Cross + " НЕ НАЛЕЖИТЬ")}");
+                        Console.ForegroundColor = belongs ?  ConsoleColor.Green : ConsoleColor.Yellow;
+                        Console.WriteLine($"{pryama.GetObjectType()}: {(belongs ? "✓ НАЛЕЖИТЬ" : "✗ НЕ НАЛЕЖИТЬ")}");
                         Console.WriteLine($"  Відстань: {distance:F6}");
                         Console.ResetColor();
                     }
                 }
-                catch (Exception ex)
+                catch (ArgumentException ex)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{obj.GetObjectType()}: Помилка - {ex.Message}");
+                    Console.WriteLine($"{obj. GetType().Name}: Помилка - {ex.Message}");
                     Console.ResetColor();
                 }
             }
@@ -516,18 +471,26 @@ namespace GeometryApp
         /// <summary>
         /// Отримання кількості об'єктів
         /// </summary>
-        public int GetObjectCount() => _objects.Count;
-
-        /// <summary>
-        /// Отримання всіх об'єктів (read-only)
-        /// </summary>
-        public IReadOnlyList<GeometricObject> GetAllObjects() => _objects.AsReadOnly();
+        public int GetObjectCount()
+        {
+            return _objects.Count;
+        }
     }
-    #endregion
 
-    #region InputHelper Class
     /// <summary>
-    /// Допоміжний клас для введення даних з валідацією
+    /// Константи для UI
+    /// </summary>
+    public static class UIConstants
+    {
+        public const string BoxTop = "╔═══════════════════════════════════════════════════════════╗";
+        public const string BoxBottom = "╚═══════════════════════════════════════════════════════════╝";
+        public const string Separator = "────────────────────────────────────────────────────────────";
+        public const string SectionTop = "┌─────────────────────────────────────────────────────────┐";
+        public const string SectionBottom = "└─────────────────────────────────────────────────────────┘";
+    }
+
+    /// <summary>
+    /// Допоміжний клас для введення даних
     /// </summary>
     public static class InputHelper
     {
@@ -539,9 +502,9 @@ namespace GeometryApp
                 if (double.TryParse(Console.ReadLine(), out double result))
                     return result;
 
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(UIConstants.Messages.InvalidInput);
-                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor. Red;
+                Console.WriteLine("❌ Помилка!  Введіть коректне число.");
+                Console. ResetColor();
             }
         }
 
@@ -554,7 +517,7 @@ namespace GeometryApp
                     return result;
 
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{UIConstants.Messages.InvalidInput} (мінімум {minValue})");
+                Console.WriteLine($"❌ Помилка! Введіть коректне число (мінімум {minValue}).");
                 Console.ResetColor();
             }
         }
@@ -562,7 +525,7 @@ namespace GeometryApp
         public static double[] ReadCoefficients(int count, string typeName)
         {
             double[] coefficients = new double[count];
-            Console.WriteLine($"\n{UIConstants.Symbols.Pencil} Введіть {count} коефіцієнтів для {typeName} (a0, a1, ...):");
+            Console.WriteLine($"\n📝 Введіть {count} коефіцієнтів для {typeName} (a0, a1, ...):");
 
             for (int i = 0; i < count; i++)
             {
@@ -575,60 +538,42 @@ namespace GeometryApp
         public static double[] ReadPoint(int dimension)
         {
             double[] point = new double[dimension];
-            Console.WriteLine($"\n{UIConstants.Symbols.Point} Введіть координати точки ({dimension}D):");
+            Console.WriteLine($"\n📍 Введіть координати точки ({dimension}D):");
 
             for (int i = 0; i < dimension; i++)
             {
-                string label = dimension == 2 ? (i == 0 ? "x" : "y") : $"x{i + 1}";
-                point[i] = ReadDouble($"   {label} = ");
+                point[i] = ReadDouble($"   {(dimension == 2 ? (i == 0 ? "x" : "y") : $"x{i + 1}")} = ");
             }
 
             return point;
         }
     }
-    #endregion
 
-    #region Program Class
     public class Program
     {
-        private static GeometryManager _manager;
-        private static Pryama _pryama;
-        private static Giperploschyna _giper;
-
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
+
             PrintHeader();
 
             try
             {
-                _manager = new GeometryManager();
+                GeometryManager manager = new GeometryManager();
 
-                // Етап 1: Створення об'єктів
-                CreateObjects();
-
-                // Етап 2: Демонстрація поліморфізму
-                DemonstratePolymorphism();
-
-                // Етап 3: Демонстрація віртуальних методів
-                _manager.DemonstrateVirtualMethods();
-
-                // Етап 4: Виведення всіх об'єктів
-                _manager.PrintAllObjects();
-
-                // Етап 5: Перевірка точок
-                CheckPointsLoop();
-
-                // Етап 6: Додаткова демонстрація
-                DemonstrateArrayPolymorphism();
-
-                // Етап 7: Статистика
-                ShowStatistics();
+                // Розбиття на методи для кращої читабельності
+                CreateObjects(manager);
+                DemonstratePolymorphism(manager);
+                manager.DemonstrateVirtualMethods();
+                manager.PrintAllObjects();
+                CheckPointsLoop(manager);
+                DemonstrateArrayPolymorphism(manager);
+                ShowStatistics(manager);
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n{UIConstants.Messages.CriticalError}{ex.Message}");
+                Console.ForegroundColor = ConsoleColor. Red;
+                Console.WriteLine($"\n❌ Критична помилка: {ex. Message}");
                 Console.WriteLine($"Деталі: {ex.StackTrace}");
                 Console.ResetColor();
             }
@@ -637,77 +582,87 @@ namespace GeometryApp
             Console.ReadKey();
         }
 
-        #region Helper Methods
-
         /// <summary>
         /// Виведення заголовка програми
         /// </summary>
         private static void PrintHeader()
         {
-            Console.WriteLine(UIConstants.HeaderLine);
-            Console.WriteLine(UIConstants.Messages.ProgramTitle);
-            Console.WriteLine(UIConstants.Messages.Author);
-            Console.WriteLine($"║  Дата: {DateTime.UtcNow:yyyy-MM-dd}                                         ║");
-            Console.WriteLine($"{UIConstants.FooterLine}\n");
+            Console.WriteLine(UIConstants.BoxTop);
+            Console.WriteLine("║  Лабораторна робота: Віртуальні методи та поліморфізм    ║");
+            Console.WriteLine("║  Виконав: noic9                                           ║");
+            Console.WriteLine("║  Дата: 2025-11-13                                         ║");
+            Console.WriteLine($"{UIConstants.BoxBottom}\n");
+        }
+
+        /// <summary>
+        /// Виведення футера програми
+        /// </summary>
+        private static void PrintFooter()
+        {
+            Console.WriteLine($"\n{UIConstants.BoxTop}");
+            Console.WriteLine("║  Програма завершена.  Натисніть будь-яку клавішу...       ║");
+            Console.WriteLine(UIConstants.BoxBottom);
         }
 
         /// <summary>
         /// Створення об'єктів
         /// </summary>
-        private static void CreateObjects()
+        private static void CreateObjects(GeometryManager manager)
         {
-            Console.WriteLine("┌" + new string('─', UIConstants.LineWidth - 2) + "┐");
-            Console.WriteLine("│ ЕТАП 1: Динамічне створення об'єктів" + new string(' ', 23) + "│");
-            Console.WriteLine("└" + new string('─', UIConstants.LineWidth - 2) + "┘\n");
+            Console.WriteLine(UIConstants.SectionTop);
+            Console.WriteLine("│ ЕТАП 1: Динамічне створення об'єктів                    │");
+            Console.WriteLine($"{UIConstants.SectionBottom}\n");
 
-            // Створення прямої
+            // Створення прямої (динамічно)
             Console.WriteLine("🔹 Створення об'єкта 'Пряма':");
-            _pryama = new Pryama();
+            Pryama pryama = new Pryama();
             double[] coeffPryama = InputHelper.ReadCoefficients(3, "прямої");
-            _pryama.SetCoefficients(coeffPryama);
-            _manager.AddObject(_pryama);
+            pryama.SetCoefficients(coeffPryama);
+            manager.AddObject(pryama);
 
-            // Створення гіперплощини
+            // Створення гіперплощини (динамічно)
             Console.WriteLine("\n🔹 Створення об'єкта 'Гіперплощина':");
-            _giper = new Giperploschyna();
+            Giperploschyna giper = new Giperploschyna();
             double[] coeffGiper = InputHelper.ReadCoefficients(5, "гіперплощини");
-            _giper.SetCoefficients(coeffGiper);
-            _manager.AddObject(_giper);
+            giper.SetCoefficients(coeffGiper);
+            manager.AddObject(giper);
         }
 
         /// <summary>
         /// Демонстрація поліморфізму через посилання
         /// </summary>
-        private static void DemonstratePolymorphism()
+        private static void DemonstratePolymorphism(GeometryManager manager)
         {
-            Console.WriteLine("\n┌" + new string('─', UIConstants.LineWidth - 2) + "┐");
-            Console.WriteLine("│ ЕТАП 2: Демонстрація поліморфізму через посилання" + new string(' ', 9) + "│");
-            Console.WriteLine("└" + new string('─', UIConstants.LineWidth - 2) + "┘\n");
+            Console.WriteLine($"\n{UIConstants.SectionTop}");
+            Console.WriteLine("│ ЕТАП 2: Демонстрація поліморфізму через посилання       │");
+            Console. WriteLine($"{UIConstants.SectionBottom}\n");
 
-            // Посилання базового класу на похідний об'єкт
-            Pryama baseRef = _giper;
+            // Створюємо гіперплощину для демонстрації
+            Giperploschyna giper = new Giperploschyna(1, 2, 3, 4, 5);
+            
+            // Покажчик базового класу на об'єкт похідного класу
+            Pryama baseRef = giper; // Поліморфізм! 
 
-            Console.WriteLine($"{UIConstants.Symbols.Pin} Посилання базового класу (Pryama) вказує на об'єкт Giperploschyna:");
+            Console.WriteLine("📌 Посилання базового класу (Pryama) вказує на об'єкт Giperploschyna:");
             Console.WriteLine($"   GetObjectType() повертає: {baseRef.GetObjectType()}");
-            Console.WriteLine($"   ToString() повертає: {baseRef}");
-            Console.WriteLine($"   GetDimension() повертає: {baseRef.GetDimension()}D");
-            Console.WriteLine($"   IsValid() повертає: {baseRef.IsValid()}");
+            Console. WriteLine($"   ToString() повертає: {baseRef}");
+            Console.WriteLine($"   GetDimension() повертає: {baseRef.GetDimension()}");
         }
 
         /// <summary>
         /// Цикл перевірки точок
         /// </summary>
-        private static void CheckPointsLoop()
+        private static void CheckPointsLoop(GeometryManager manager)
         {
-            Console.WriteLine("\n┌" + new string('─', UIConstants.LineWidth - 2) + "┐");
-            Console.WriteLine("│ ЕТАП 3: Перевірка належності точок" + new string(' ', 25) + "│");
-            Console.WriteLine("└" + new string('─', UIConstants.LineWidth - 2) + "┘");
+            Console.WriteLine($"\n{UIConstants.SectionTop}");
+            Console.WriteLine("│ ЕТАП 3: Перевірка належності точок                      │");
+            Console.WriteLine(UIConstants.SectionBottom);
 
             int pointCount = InputHelper.ReadInt("\nВведіть кількість точок для перевірки: ", 0);
 
             for (int i = 0; i < pointCount; i++)
             {
-                Console.WriteLine($"\n{new string('─', UIConstants.LineWidth)}");
+                Console.WriteLine($"\n{new string('─', 60)}");
                 Console.WriteLine($"Точка #{i + 1}:");
 
                 int dimension = InputHelper.ReadInt("Розмірність точки (2 або 4): ", 2);
@@ -722,30 +677,35 @@ namespace GeometryApp
                 }
 
                 double[] point = InputHelper.ReadPoint(dimension);
-                _manager.CheckPointForAll(point);
+                manager.CheckPointForAll(point);
             }
         }
 
         /// <summary>
         /// Демонстрація поліморфізму через масив
         /// </summary>
-        private static void DemonstrateArrayPolymorphism()
+        private static void DemonstrateArrayPolymorphism(GeometryManager manager)
         {
-            Console.WriteLine("\n┌" + new string('─', UIConstants.LineWidth - 2) + "┐");
-            Console.WriteLine("│ ЕТАП 4: Демонстрація віртуальних методів через масив" + new string(' ', 5) + "│");
-            Console.WriteLine("└" + new string('─', UIConstants.LineWidth - 2) + "┘\n");
+            Console.WriteLine($"\n{UIConstants.SectionTop}");
+            Console.WriteLine("│ ЕТАП 4: Додаткова демонстрація віртуальних методів      │");
+            Console.WriteLine($"{UIConstants.SectionBottom}\n");
 
-            GeometricObject[] geometryArray = new GeometricObject[] { _pryama, _giper };
+            // Створюємо масив для демонстрації
+            GeometricObject[] geometryArray = new GeometricObject[] 
+            { 
+                new Pryama(1, 2, 3), 
+                new Giperploschyna(1, 1, 1, 1, 1) 
+            };
 
-            Console.WriteLine($"{UIConstants.Symbols.Chart} Використання масиву посилань базового класу:\n");
+            Console.WriteLine("📊 Використання масиву посилань базового класу:\n");
 
             for (int i = 0; i < geometryArray.Length; i++)
             {
                 Console.WriteLine($"[{i + 1}] Об'єкт:");
                 geometryArray[i].PrintInfo();
+
                 Console.WriteLine($"    IsValid(): {geometryArray[i].IsValid()}");
                 Console.WriteLine($"    GetDimension(): {geometryArray[i].GetDimension()}D");
-                Console.WriteLine($"    GetObjectType(): {geometryArray[i].GetObjectType()}");
                 Console.WriteLine();
             }
         }
@@ -753,30 +713,15 @@ namespace GeometryApp
         /// <summary>
         /// Виведення статистики
         /// </summary>
-        private static void ShowStatistics()
+        private static void ShowStatistics(GeometryManager manager)
         {
-            Console.WriteLine($"\n{UIConstants.HeaderLine}");
+            Console.WriteLine($"\n{UIConstants.BoxTop}");
             Console.WriteLine("║                      СТАТИСТИКА                           ║");
-            Console.WriteLine(UIConstants.FooterLine);
-            Console.WriteLine($"Всього створено об'єктів: {_manager.GetObjectCount()}");
-            Console.WriteLine($"Використано віртуальних методів: 8");
-            Console.WriteLine($"Використано абстрактних методів: 4");
-            Console.WriteLine($"Продемонстровано поліморфізм: {UIConstants.Symbols.Check}");
-            Console.WriteLine($"Динамічне створення об'єктів: {UIConstants.Symbols.Check}");
-            Console.WriteLine($"Використано List<GeometricObject>: {UIConstants.Symbols.Check}");
+            Console.WriteLine(UIConstants.BoxBottom);
+            Console.WriteLine($"Всього створено об'єктів: {manager.GetObjectCount()}");
+            Console.WriteLine($"Використано віртуальних методів: 6+");
+            Console.WriteLine($"Продемонстровано поліморфізм: ✓");
+            Console.WriteLine($"Динамічне створення об'єктів: ✓");
         }
-
-        /// <summary>
-        /// Виведення завершального повідомлення
-        /// </summary>
-        private static void PrintFooter()
-        {
-            Console.WriteLine($"\n{UIConstants.HeaderLine}");
-            Console.WriteLine(UIConstants.Messages.ProgramComplete);
-            Console.WriteLine(UIConstants.FooterLine);
-        }
-
-        #endregion
     }
-    #endregion
 }
