@@ -5,10 +5,36 @@ namespace GeometryApp
 {
     /// <summary>
     /// Базовий абстрактний клас для геометричних об'єктів
+    /// Реалізує повний поліморфізм для всіх операцій
     /// </summary>
     public abstract class GeometricObject
     {
         protected const double EpsilonValue = 1e-10;
+
+        /// <summary>
+        /// Абстрактний метод для завдання коефіцієнтів об'єкта
+        /// </summary>
+        /// <param name="coefficients">Масив коефіцієнтів</param>
+        public abstract void SetCoefficients(params double[] coefficients);
+
+        /// <summary>
+        /// Абстрактний метод для виведення коефіцієнтів об'єкта
+        /// </summary>
+        public abstract void PrintCoefficients();
+
+        /// <summary>
+        /// Абстрактний метод для визначення належності точки до об'єкта
+        /// </summary>
+        /// <param name="point">Координати точки</param>
+        /// <returns>true, якщо точка належить об'єкту</returns>
+        public abstract bool ContainsPoint(params double[] point);
+
+        /// <summary>
+        /// Абстрактний метод для обчислення відстані від точки до об'єкта
+        /// </summary>
+        /// <param name="point">Координати точки</param>
+        /// <returns>Відстань від точки до об'єкта</returns>
+        public abstract double DistanceToPoint(params double[] point);
 
         /// <summary>
         /// Абстрактний метод для виведення інформації про об'єкт
@@ -32,6 +58,17 @@ namespace GeometryApp
         public virtual string GetObjectType()
         {
             return GetType().Name;
+        }
+
+        /// <summary>
+        /// Фіналізатор (деструктор) - для демонстраційних цілей
+        /// У реальних додатках використовується рідко, бо GC автоматично керує пам'яттю
+        /// </summary>
+        ~GeometricObject()
+        {
+            // Для навчальних цілей: показуємо, коли об'єкт знищується
+            // В реальному коді фіналізатор потрібен лише для очищення неуправляємих ресурсів
+            Console.WriteLine($"[GC] Фіналізатор: об'єкт {GetType().Name} знищено збирачем сміття");
         }
     }
 
@@ -98,30 +135,38 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Віртуальний метод для завдання коефіцієнтів
+        /// Перевизначення абстрактного методу для завдання коефіцієнтів
         /// </summary>
         /// <param name="coefficients">Масив коефіцієнтів [a0, a1, a2]</param>
-        public virtual void SetCoefficients(params double[] coefficients)
+        public override void SetCoefficients(params double[] coefficients)
         {
             if (coefficients == null)
             {
-                throw new ArgumentNullException(nameof(coefficients));
+                throw new ArgumentNullException(nameof(coefficients), "Масив коефіцієнтів не може бути null");
             }
 
             if (coefficients.Length != 3)
             {
-                throw new ArgumentException("Для прямої потрібно рівно 3 коефіцієнти: a0, a1, a2");
+                throw new ArgumentException($"Для прямої потрібно рівно 3 коефіцієнти: a0, a1, a2.  Надано: {coefficients.Length}");
             }
 
             A0 = coefficients[0];
             A1 = coefficients[1];
             A2 = coefficients[2];
+
+            // Перевірка валідності після встановлення коефіцієнтів
+            if (!IsValid())
+            {
+                Console.ForegroundColor = ConsoleColor. Yellow;
+                Console.WriteLine("⚠ Увага: пряма з такими коефіцієнтами не є валідною (a1 та a2 не можуть бути одночасно нульовими)!");
+                Console.ResetColor();
+            }
         }
 
         /// <summary>
-        /// Віртуальний метод для виведення коефіцієнтів
+        /// Перевизначення абстрактного методу для виведення коефіцієнтів
         /// </summary>
-        public virtual void PrintCoefficients()
+        public override void PrintCoefficients()
         {
             Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
             Console.WriteLine("║                         ПРЯМА                             ║");
@@ -131,21 +176,13 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Віртуальний метод для визначення належності точки до прямої
+        /// Перевизначення абстрактного методу для визначення належності точки до прямої
         /// </summary>
         /// <param name="point">Координати точки [x, y]</param>
         /// <returns>true, якщо точка належить прямій</returns>
-        public virtual bool ContainsPoint(params double[] point)
+        public override bool ContainsPoint(params double[] point)
         {
-            if (point == null)
-            {
-                throw new ArgumentNullException(nameof(point));
-            }
-
-            if (point.Length != 2)
-            {
-                throw new ArgumentException("Для прямої потрібно рівно 2 координати: x, y");
-            }
+            ValidatePointDimension(point, 2);
 
             double x = point[0];
             double y = point[1];
@@ -155,17 +192,19 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Віртуальний метод для обчислення відстані від точки до прямої
+        /// Перевизначення абстрактного методу для обчислення відстані від точки до прямої
         /// Використовує формулу: d = |a1*x + a2*y + a0| / sqrt(a1² + a2²)
         /// </summary>
         /// <param name="point">Координати точки [x, y]</param>
         /// <returns>Відстань від точки до прямої</returns>
-        public virtual double DistanceToPoint(params double[] point)
+        public override double DistanceToPoint(params double[] point)
         {
-            if (point == null || point.Length != 2)
+            if (!IsValid())
             {
-                throw new ArgumentException("Потрібно рівно 2 координати: x, y");
+                throw new InvalidOperationException("Неможливо обчислити відстань: пряма має некоректні коефіцієнти (a1 та a2 не можуть бути одночасно нульовими)");
             }
+
+            ValidatePointDimension(point, 2);
 
             double x = point[0];
             double y = point[1];
@@ -173,12 +212,23 @@ namespace GeometryApp
             double numerator = Math.Abs(A1 * x + A2 * y + A0);
             double denominator = Math.Sqrt(A1 * A1 + A2 * A2);
 
-            if (denominator < EpsilonValue)
+            return numerator / denominator;
+        }
+
+        /// <summary>
+        /// Допоміжний метод для валідації розмірності точки
+        /// </summary>
+        protected void ValidatePointDimension(double[] point, int expectedDimension)
+        {
+            if (point == null)
             {
-                throw new InvalidOperationException("Некоректні коефіцієнти прямої: a1 та a2 не можуть бути одночасно нульовими");
+                throw new ArgumentNullException(nameof(point), "Координати точки не можуть бути null");
             }
 
-            return numerator / denominator;
+            if (point.Length != expectedDimension)
+            {
+                throw new ArgumentException($"Для {GetObjectType()} потрібно рівно {expectedDimension} координати.  Надано: {point.Length}");
+            }
         }
 
         /// <summary>
@@ -206,7 +256,7 @@ namespace GeometryApp
         /// </summary>
         public override bool IsValid()
         {
-            return Math.Abs(A1) > EpsilonValue || Math. Abs(A2) > EpsilonValue;
+            return Math.Abs(A1) > EpsilonValue || Math.Abs(A2) > EpsilonValue;
         }
 
         /// <summary>
@@ -224,44 +274,14 @@ namespace GeometryApp
     }
 
     /// <summary>
-    /// Клас для представлення гіперплощини у 4-вимірному просторі
+    /// Похідний клас для гіперплощини у 4-вимірному просторі
     /// Рівняння: a1*x1 + a2*x2 + a3*x3 + a4*x4 + a0 = 0
-    /// Наслідує безпосередньо GeometricObject для правильної ієрархії
+    /// Наслідує Pryama і розширює до 4D (відповідно до умови завдання)
     /// </summary>
-    public class Giperploschyna : GeometricObject
+    public class Giperploschyna : Pryama
     {
-        private double _a0;
-        private double _a1;
-        private double _a2;
         private double _a3;
         private double _a4;
-
-        /// <summary>
-        /// Властивість для доступу до коефіцієнта a0 (вільний член)
-        /// </summary>
-        public double A0
-        {
-            get => _a0;
-            protected set => _a0 = value;
-        }
-
-        /// <summary>
-        /// Властивість для доступу до коефіцієнта a1 (коефіцієнт при x1)
-        /// </summary>
-        public double A1
-        {
-            get => _a1;
-            protected set => _a1 = value;
-        }
-
-        /// <summary>
-        /// Властивість для доступу до коефіцієнта a2 (коефіцієнт при x2)
-        /// </summary>
-        public double A2
-        {
-            get => _a2;
-            protected set => _a2 = value;
-        }
 
         /// <summary>
         /// Властивість для доступу до коефіцієнта a3 (коефіцієнт при x3)
@@ -285,11 +305,8 @@ namespace GeometryApp
         /// Конструктор за замовчуванням
         /// Ініціалізує всі коефіцієнти нулями
         /// </summary>
-        public Giperploschyna()
+        public Giperploschyna() : base()
         {
-            _a0 = 0;
-            _a1 = 0;
-            _a2 = 0;
             _a3 = 0;
             _a4 = 0;
         }
@@ -303,28 +320,26 @@ namespace GeometryApp
         /// <param name="a3">Коефіцієнт при x3</param>
         /// <param name="a4">Коефіцієнт при x4</param>
         public Giperploschyna(double a0, double a1, double a2, double a3, double a4)
+            : base(a0, a1, a2)
         {
-            _a0 = a0;
-            _a1 = a1;
-            _a2 = a2;
             _a3 = a3;
             _a4 = a4;
         }
 
         /// <summary>
-        /// Метод для завдання коефіцієнтів
+        /// Перевизначення методу для завдання коефіцієнтів
         /// </summary>
         /// <param name="coefficients">Масив коефіцієнтів [a0, a1, a2, a3, a4]</param>
-        public void SetCoefficients(params double[] coefficients)
+        public override void SetCoefficients(params double[] coefficients)
         {
             if (coefficients == null)
             {
-                throw new ArgumentNullException(nameof(coefficients));
+                throw new ArgumentNullException(nameof(coefficients), "Масив коефіцієнтів не може бути null");
             }
 
             if (coefficients.Length != 5)
             {
-                throw new ArgumentException("Для гіперплощини потрібно рівно 5 коефіцієнтів: a0, a1, a2, a3, a4");
+                throw new ArgumentException($"Для гіперплощини потрібно рівно 5 коефіцієнтів: a0, a1, a2, a3, a4.  Надано: {coefficients.Length}");
             }
 
             A0 = coefficients[0];
@@ -332,14 +347,22 @@ namespace GeometryApp
             A2 = coefficients[2];
             A3 = coefficients[3];
             A4 = coefficients[4];
+
+            // Перевірка валідності після встановлення коефіцієнтів
+            if (! IsValid())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("⚠ Увага: гіперплощина з такими коефіцієнтами не є валідною (всі коефіцієнти a1, a2, a3, a4 не можуть бути одночасно нульовими)!");
+                Console.ResetColor();
+            }
         }
 
         /// <summary>
-        /// Метод для виведення коефіцієнтів
+        /// Перевизначення методу для виведення коефіцієнтів
         /// </summary>
-        public void PrintCoefficients()
+        public override void PrintCoefficients()
         {
-            Console. WriteLine("╔═══════════════════════════════════════════════════════════╗");
+            Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
             Console.WriteLine("║                     ГІПЕРПЛОЩИНА                          ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
             Console.WriteLine($"Рівняння: ({A1})*x1 + ({A2})*x2 + ({A3})*x3 + ({A4})*x4 + ({A0}) = 0");
@@ -347,46 +370,35 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Метод для визначення належності точки до гіперплощини
+        /// Перевизначення методу для визначення належності точки до гіперплощини
         /// </summary>
         /// <param name="point">Координати точки [x1, x2, x3, x4]</param>
         /// <returns>true, якщо точка належить гіперплощині</returns>
-        public bool ContainsPoint(params double[] point)
+        public override bool ContainsPoint(params double[] point)
         {
-            if (point == null)
-            {
-                throw new ArgumentNullException(nameof(point));
-            }
-
-            if (point.Length != 4)
-            {
-                throw new ArgumentException("Для гіперплощини потрібно рівно 4 координати: x1, x2, x3, x4");
-            }
+            ValidatePointDimension(point, 4);
 
             double result = A1 * point[0] + A2 * point[1] + A3 * point[2] + A4 * point[3] + A0;
             return Math.Abs(result) < EpsilonValue;
         }
 
         /// <summary>
-        /// Метод для обчислення відстані від точки до гіперплощини
+        /// Перевизначення методу для обчислення відстані від точки до гіперплощини
         /// Використовує формулу: d = |a1*x1 + a2*x2 + a3*x3 + a4*x4 + a0| / sqrt(a1² + a2² + a3² + a4²)
         /// </summary>
         /// <param name="point">Координати точки [x1, x2, x3, x4]</param>
         /// <returns>Відстань від точки до гіперплощини</returns>
-        public double DistanceToPoint(params double[] point)
+        public override double DistanceToPoint(params double[] point)
         {
-            if (point == null || point.Length != 4)
+            if (!IsValid())
             {
-                throw new ArgumentException("Потрібно рівно 4 координати: x1, x2, x3, x4");
+                throw new InvalidOperationException("Неможливо обчислити відстань: гіперплощина має некоректні коефіцієнти (всі коефіцієнти a1, a2, a3, a4 не можуть бути одночасно нульовими)");
             }
+
+            ValidatePointDimension(point, 4);
 
             double numerator = Math.Abs(A1 * point[0] + A2 * point[1] + A3 * point[2] + A4 * point[3] + A0);
             double denominator = Math.Sqrt(A1 * A1 + A2 * A2 + A3 * A3 + A4 * A4);
-
-            if (denominator < EpsilonValue)
-            {
-                throw new InvalidOperationException("Некоректні коефіцієнти гіперплощини: всі коефіцієнти a1, a2, a3, a4 не можуть бути одночасно нульовими");
-            }
 
             return numerator / denominator;
         }
@@ -466,7 +478,7 @@ namespace GeometryApp
         /// </summary>
         public void PrintAllObjects()
         {
-            Console.WriteLine($"\n{UiConstants.BoxTop}");
+            Console. WriteLine($"\n{UiConstants.BoxTop}");
             Console.WriteLine("║          СПИСОК ВСІХ ОБ'ЄКТІВ (Поліморфізм)              ║");
             Console.WriteLine($"{UiConstants.BoxBottom}\n");
 
@@ -483,33 +495,28 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Демонстрація виклику віртуальних методів
+        /// Демонстрація виклику віртуальних методів через базовий клас
+        /// Повний поліморфізм без перевірки типів! 
         /// </summary>
         public void DemonstrateVirtualMethods()
         {
-            Console.WriteLine($"\n{UiConstants.BoxTop}");
-            Console.WriteLine("║       ДЕМОНСТРАЦІЯ ВІРТУАЛЬНИХ МЕТОДІВ                    ║");
+            Console.WriteLine($"\n{UiConstants. BoxTop}");
+            Console. WriteLine("║       ДЕМОНСТРАЦІЯ ВІРТУАЛЬНИХ МЕТОДІВ                    ║");
             Console. WriteLine($"{UiConstants.BoxBottom}\n");
 
             foreach (var obj in _objects)
             {
                 Console.WriteLine($"\n{UiConstants. Separator}");
+                
+                // Виклик методів через базовий клас - повний поліморфізм! 
                 obj.PrintInfo();
-
-                // Виклик методу PrintCoefficients залежно від типу
-                if (obj is Pryama pryama)
-                {
-                    pryama.PrintCoefficients();
-                }
-                else if (obj is Giperploschyna giper)
-                {
-                    giper.PrintCoefficients();
-                }
+                obj.PrintCoefficients();
             }
         }
 
         /// <summary>
         /// Перевірка точки для всіх об'єктів з попередньою валідацією розмірності
+        /// Демонструє поліморфізм без кастів і перевірок типу
         /// </summary>
         /// <param name="point">Координати точки</param>
         public void CheckPointForAll(double[] point)
@@ -532,21 +539,11 @@ namespace GeometryApp
 
                 try
                 {
-                    bool belongs = false;
-                    double distance = 0;
+                    // Повний поліморфізм - виклик методів через базовий клас! 
+                    bool belongs = obj.ContainsPoint(point);
+                    double distance = obj.DistanceToPoint(point);
 
-                    if (obj is Pryama pryama)
-                    {
-                        belongs = pryama. ContainsPoint(point);
-                        distance = pryama. DistanceToPoint(point);
-                    }
-                    else if (obj is Giperploschyna giper)
-                    {
-                        belongs = giper.ContainsPoint(point);
-                        distance = giper. DistanceToPoint(point);
-                    }
-
-                    Console.ForegroundColor = belongs ?  ConsoleColor.Green : ConsoleColor.Yellow;
+                    Console.ForegroundColor = belongs ? ConsoleColor.Green : ConsoleColor.Yellow;
                     Console.WriteLine($"{obj.GetObjectType()}: {(belongs ? "✓ НАЛЕЖИТЬ" : "✗ НЕ НАЛЕЖИТЬ")}");
                     Console.WriteLine($"  Відстань: {distance:F6}");
                     Console.ResetColor();
@@ -566,6 +563,31 @@ namespace GeometryApp
         public int GetObjectCount()
         {
             return _objects.Count;
+        }
+
+        /// <summary>
+        /// Демонстрація роботи з коефіцієнтами через поліморфізм
+        /// </summary>
+        public void DemonstratePolymorphicSetCoefficients()
+        {
+            Console.WriteLine($"\n{UiConstants.BoxTop}");
+            Console.WriteLine("║     ДЕМОНСТРАЦІЯ ПОЛІМОРФНОГО ВСТАНОВЛЕННЯ КОЕФІЦІЄНТІВ   ║");
+            Console.WriteLine($"{UiConstants.BoxBottom}\n");
+
+            // Створюємо об'єкти через базовий клас
+            GeometricObject obj1 = new Pryama();
+            GeometricObject obj2 = new Giperploschyna();
+
+            Console.WriteLine("📝 Встановлення коефіцієнтів через посилання базового класу:\n");
+
+            // Виклик SetCoefficients через базовий клас - поліморфізм! 
+            Console.WriteLine("1. Пряма:");
+            obj1.SetCoefficients(1, 2, 3);
+            obj1.PrintCoefficients();
+
+            Console.WriteLine("\n2.  Гіперплощина:");
+            obj2.SetCoefficients(1, 1, 1, 1, 1);
+            obj2.PrintCoefficients();
         }
     }
 
@@ -611,10 +633,10 @@ namespace GeometryApp
             while (true)
             {
                 Console.Write(prompt);
-                if (int.TryParse(Console.ReadLine(), out int result) && result >= minValue)
+                if (int.TryParse(Console. ReadLine(), out int result) && result >= minValue)
                     return result;
 
-                Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor. Red;
                 Console.WriteLine($"❌ Помилка! Введіть коректне число (мінімум {minValue}).");
                 Console. ResetColor();
             }
@@ -641,7 +663,7 @@ namespace GeometryApp
         }
 
         /// <summary>
-        /// Зчитування масиву коефіцієнтів
+        /// Зчитування масиву коефіцієнтів з валідацією
         /// </summary>
         public static double[] ReadCoefficients(int count, string typeName)
         {
@@ -695,6 +717,7 @@ namespace GeometryApp
 
                 CreateObjects(manager);
                 DemonstratePolymorphism(manager);
+                manager.DemonstratePolymorphicSetCoefficients();
                 manager.DemonstrateVirtualMethods();
                 manager.PrintAllObjects();
                 CheckPointsLoop(manager);
@@ -703,13 +726,19 @@ namespace GeometryApp
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor. Red;
-                Console.WriteLine($"\n❌ Критична помилка: {ex. Message}");
+                Console. ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\n❌ Критична помилка: {ex.Message}");
                 Console.WriteLine($"Деталі: {ex.StackTrace}");
                 Console.ResetColor();
             }
 
             PrintFooter();
+            
+            // Демонстрація роботи GC та фіналізаторів
+            Console.WriteLine("\n[Демонстрація GC] Очікування збирача сміття...");
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            
             Console.ReadKey();
         }
 
@@ -746,16 +775,16 @@ namespace GeometryApp
 
             // Створення прямої
             Console.WriteLine("🔹 Створення об'єкта 'Пряма' (2D):");
-            Pryama pryama = new Pryama();
+            GeometricObject pryama = new Pryama(); // Поліморфізм!
             double[] coeffPryama = InputHelper.ReadCoefficients(3, "прямої");
-            pryama.SetCoefficients(coeffPryama);
+            pryama.SetCoefficients(coeffPryama); // Виклик через базовий клас! 
             manager.AddObject(pryama);
 
             // Створення гіперплощини
             Console.WriteLine("\n🔹 Створення об'єкта 'Гіперплощина' (4D):");
-            Giperploschyna giper = new Giperploschyna();
+            GeometricObject giper = new Giperploschyna(); // Поліморфізм!
             double[] coeffGiper = InputHelper.ReadCoefficients(5, "гіперплощини");
-            giper.SetCoefficients(coeffGiper);
+            giper.SetCoefficients(coeffGiper); // Виклик через базовий клас!
             manager.AddObject(giper);
         }
 
@@ -768,17 +797,24 @@ namespace GeometryApp
             Console. WriteLine("│ ЕТАП 2: Демонстрація поліморфізму через посилання       │");
             Console.WriteLine($"{UiConstants.SectionBottom}\n");
 
-            // Створюємо гіперплощину для демонстрації
-            Giperploschyna giper = new Giperploschyna(1, 2, 3, 4, 5);
-
-            // Посилання базового класу на об'єкт похідного класу
-            GeometricObject baseRef = giper; // Поліморфізм! 
+            // Створюємо гіперплощину через базовий клас
+            GeometricObject baseRef = new Giperploschyna(1, 2, 3, 4, 5);
 
             Console.WriteLine("📌 Посилання базового класу (GeometricObject) вказує на об'єкт Giperploschyna:");
             Console.WriteLine($"   GetObjectType() повертає: {baseRef.GetObjectType()}");
-            Console. WriteLine($"   ToString() повертає: {baseRef}");
+            Console.WriteLine($"   ToString() повертає: {baseRef}");
             Console.WriteLine($"   GetDimension() повертає: {baseRef.GetDimension()}D");
             Console.WriteLine($"   IsValid() повертає: {baseRef.IsValid()}");
+
+            Console.WriteLine("\n📌 Виклик методів через базовий клас:");
+            baseRef.PrintInfo();
+            baseRef.PrintCoefficients();
+
+            // Демонстрація ContainsPoint та DistanceToPoint
+            double[] testPoint = { 0, 0, 0, 0 };
+            Console.WriteLine($"\n📌 Перевірка точки ({string.Join(", ", testPoint)}):");
+            Console.WriteLine($"   ContainsPoint() повертає: {baseRef. ContainsPoint(testPoint)}");
+            Console.WriteLine($"   DistanceToPoint() повертає: {baseRef. DistanceToPoint(testPoint):F6}");
         }
 
         /// <summary>
@@ -825,8 +861,11 @@ namespace GeometryApp
             for (int i = 0; i < geometryArray.Length; i++)
             {
                 Console. WriteLine($"[{i + 1}] Об'єкт:");
-                geometryArray[i].PrintInfo();
-
+                
+                // Виклик методів через базовий клас - повний поліморфізм! 
+                geometryArray[i]. PrintInfo();
+                geometryArray[i].PrintCoefficients();
+                
                 Console.WriteLine($"    IsValid(): {geometryArray[i].IsValid()}");
                 Console.WriteLine($"    GetDimension(): {geometryArray[i].GetDimension()}D");
                 Console.WriteLine();
@@ -842,9 +881,10 @@ namespace GeometryApp
             Console.WriteLine("║                      СТАТИСТИКА                           ║");
             Console.WriteLine(UiConstants.BoxBottom);
             Console.WriteLine($"Всього створено об'єктів: {manager.GetObjectCount()}");
-            Console.WriteLine($"Використано віртуальних методів: 6+");
-            Console.WriteLine($"Продемонстровано поліморфізм: ✓");
+            Console.WriteLine($"Використано абстрактних методів: 7");
+            Console.WriteLine($"Продемонстровано повний поліморфізм: ✓");
             Console.WriteLine($"Динамічне створення об'єктів: ✓");
+            Console.WriteLine($"Відсутність приведення типів (is/as): ✓");
         }
     }
 }
